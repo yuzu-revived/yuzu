@@ -399,6 +399,42 @@ public:
                                      CpuAddr workbuffer);
 
     /**
+     * Generate a REV12 BiquadFilterAndMix command (single biquad + mix into output with optional
+     * volume ramp), adding it to the command list.
+     *
+     * @param node_id            - Node id of the voice or mix this command is generated for.
+     * @param input_index        - Input mix buffer index.
+     * @param output_index       - Output mix buffer index.
+     * @param prev_volume        - Volume at the start of the ramp (ignored if !has_volume_ramp).
+     * @param volume             - Volume at the end of the ramp (or static volume).
+     * @param biquad             - Biquad filter parameters.
+     * @param state              - Pointer to current biquad state.
+     * @param prev_state         - Pointer to previous-iteration biquad state.
+     * @param prev_sample        - Pointer to slot for last filtered sample (for depopping); may
+     *                             be 0 to skip writing.
+     * @param needs_init         - True if the state should be reset to zero this call.
+     * @param has_volume_ramp    - True if a non-zero volume ramp should be applied.
+     * @param is_first_mix_buffer- True for the first mix buffer of a destination mix loop.
+     */
+    void GenerateBiquadFilterAndMixCommand(s32 node_id, s16 input_index, s16 output_index,
+                                           f32 prev_volume, f32 volume,
+                                           const VoiceInfo::BiquadFilterParameter& biquad,
+                                           CpuAddr state, CpuAddr prev_state, CpuAddr prev_sample,
+                                           bool needs_init, bool has_volume_ramp,
+                                           bool is_first_mix_buffer);
+
+    /**
+     * Generate a REV12 MultiTapBiquadFilterAndMix command (two cascaded biquads + mix into
+     * output with optional volume ramp), adding it to the command list.
+     */
+    void GenerateMultiTapBiquadFilterAndMixCommand(
+        s32 node_id, s16 input_index, s16 output_index, f32 prev_volume, f32 volume,
+        const VoiceInfo::BiquadFilterParameter& biquad0,
+        const VoiceInfo::BiquadFilterParameter& biquad1, CpuAddr state0, CpuAddr state1,
+        CpuAddr prev_state0, CpuAddr prev_state1, CpuAddr prev_sample, bool needs_init0,
+        bool needs_init1, bool has_volume_ramp, bool is_first_mix_buffer);
+
+    /**
      * Generate a multitap biquad filter command, adding it to the command list.
      *
      * @param node_id      - Node id of the voice this command is generated for.

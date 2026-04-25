@@ -172,6 +172,16 @@ u32 CommandProcessingTimeEstimatorVersion1::Estimate(
     return 0;
 }
 
+u32 CommandProcessingTimeEstimatorVersion1::Estimate(
+    [[maybe_unused]] const BiquadFilterAndMixCommand& command) const {
+    return 0;
+}
+
+u32 CommandProcessingTimeEstimatorVersion1::Estimate(
+    [[maybe_unused]] const MultiTapBiquadFilterAndMixCommand& command) const {
+    return 0;
+}
+
 u32 CommandProcessingTimeEstimatorVersion2::Estimate(
     const PcmInt16DataSourceVersion1Command& command) const {
     switch (sample_count) {
@@ -755,6 +765,16 @@ u32 CommandProcessingTimeEstimatorVersion2::Estimate(
 
 u32 CommandProcessingTimeEstimatorVersion2::Estimate(
     [[maybe_unused]] const CompressorCommand& command) const {
+    return 0;
+}
+
+u32 CommandProcessingTimeEstimatorVersion2::Estimate(
+    [[maybe_unused]] const BiquadFilterAndMixCommand& command) const {
+    return 0;
+}
+
+u32 CommandProcessingTimeEstimatorVersion2::Estimate(
+    [[maybe_unused]] const MultiTapBiquadFilterAndMixCommand& command) const {
     return 0;
 }
 
@@ -1636,6 +1656,16 @@ u32 CommandProcessingTimeEstimatorVersion3::Estimate(
 
 u32 CommandProcessingTimeEstimatorVersion3::Estimate(
     [[maybe_unused]] const CompressorCommand& command) const {
+    return 0;
+}
+
+u32 CommandProcessingTimeEstimatorVersion3::Estimate(
+    [[maybe_unused]] const BiquadFilterAndMixCommand& command) const {
+    return 0;
+}
+
+u32 CommandProcessingTimeEstimatorVersion3::Estimate(
+    [[maybe_unused]] const MultiTapBiquadFilterAndMixCommand& command) const {
     return 0;
 }
 
@@ -2538,6 +2568,16 @@ u32 CommandProcessingTimeEstimatorVersion4::Estimate(const CaptureCommand& comma
 
 u32 CommandProcessingTimeEstimatorVersion4::Estimate(
     [[maybe_unused]] const CompressorCommand& command) const {
+    return 0;
+}
+
+u32 CommandProcessingTimeEstimatorVersion4::Estimate(
+    [[maybe_unused]] const BiquadFilterAndMixCommand& command) const {
+    return 0;
+}
+
+u32 CommandProcessingTimeEstimatorVersion4::Estimate(
+    [[maybe_unused]] const MultiTapBiquadFilterAndMixCommand& command) const {
     return 0;
 }
 
@@ -3613,6 +3653,54 @@ u32 CommandProcessingTimeEstimatorVersion5::Estimate(const CompressorCommand& co
         }
     default:
         LOG_ERROR(Service_Audio, "Invalid channel count {}", command.parameter.channel_count);
+        return 0;
+    }
+}
+
+u32 CommandProcessingTimeEstimatorVersion5::Estimate(
+    const BiquadFilterAndMixCommand& command) const {
+    if (command.has_volume_ramp) {
+        switch (sample_count) {
+        case 160:
+            return 5204;
+        case 240:
+            return 6683;
+        default:
+            LOG_ERROR(Service_Audio, "Invalid sample count {}", sample_count);
+            return 0;
+        }
+    }
+    switch (sample_count) {
+    case 160:
+        return 3427;
+    case 240:
+        return 4752;
+    default:
+        LOG_ERROR(Service_Audio, "Invalid sample count {}", sample_count);
+        return 0;
+    }
+}
+
+u32 CommandProcessingTimeEstimatorVersion5::Estimate(
+    const MultiTapBiquadFilterAndMixCommand& command) const {
+    if (command.has_volume_ramp) {
+        switch (sample_count) {
+        case 160:
+            return 7939;
+        case 240:
+            return 10669;
+        default:
+            LOG_ERROR(Service_Audio, "Invalid sample count {}", sample_count);
+            return 0;
+        }
+    }
+    switch (sample_count) {
+    case 160:
+        return 6256;
+    case 240:
+        return 8683;
+    default:
+        LOG_ERROR(Service_Audio, "Invalid sample count {}", sample_count);
         return 0;
     }
 }
