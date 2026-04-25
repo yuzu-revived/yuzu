@@ -7,6 +7,7 @@
 #include <span>
 
 #include "audio_core/common/common.h"
+#include "audio_core/renderer/voice/voice_info.h"
 #include "common/common_types.h"
 
 namespace AudioCore::Renderer {
@@ -25,6 +26,23 @@ public:
     };
     static_assert(sizeof(InParameter) == 0x70,
                   "SplitterDestinationData::InParameter has the wrong size!");
+
+    /**
+     * REV12 splitter destination input header. Adds two biquad filter parameters that are
+     * applied to the destination's mix buffer before the splitter mixes it into the
+     * destination mix.
+     */
+    struct InParameterVersion2 {
+        /* 0x00 */ u32 magic; // 'SNDD'
+        /* 0x04 */ s32 id;
+        /* 0x08 */ std::array<f32, MaxMixBuffers> mix_volumes;
+        /* 0x68 */ u32 mix_id;
+        /* 0x6C */ std::array<VoiceInfo::BiquadFilterParameter, MaxBiquadFilters> biquads;
+        /* 0x84 */ bool in_use;
+        /* 0x85 */ std::array<u8, 11> reserved;
+    };
+    static_assert(sizeof(InParameterVersion2) == 0x90,
+                  "SplitterDestinationData::InParameterVersion2 has the wrong size!");
 
     SplitterDestinationData(s32 id);
 
@@ -92,6 +110,35 @@ public:
     void Update(const InParameter& params);
 
     /**
+     * Update this destination from REV12 (with splitter biquad filter) parameters.
+     *
+     * @param params - Version 2 input parameters to update the destination.
+     */
+    void Update(const InParameterVersion2& params);
+
+    /**
+     * Get the biquad filter parameter for the given index (0..MaxBiquadFilters-1).
+     */
+    const VoiceInfo::BiquadFilterParameter& GetBiquadFilterParameter(u32 index) const;
+
+    /**
+     * Returns true if any biquad filter on this destination is enabled.
+     */
+    bool IsBiquadFilterEnabled() const;
+
+    /**
+     * Returns true if any biquad filter was previously enabled (used to decide whether
+     * the splitter biquad state needs initialisation).
+     */
+    bool IsBiquadFilterEnabledPrev() const;
+
+    /**
+     * Latch the current biquad-enabled state into prev_biquad_enabled[index] so the
+     * "needs init" check works on subsequent invocations.
+     */
+    void UpdateBiquadFilterEnabledPrev(u32 index);
+
+    /**
      * Mark this destination as needing its volumes updated.
      */
     void MarkAsNeedToUpdateInternalState();
@@ -130,6 +177,11 @@ private:
     bool in_use{};
     /// Does this destination need its volumes updated?
     bool need_update{};
+    /// REV12 splitter biquad filter parameters (entries with .enabled == false are inactive).
+    std::array<VoiceInfo::BiquadFilterParameter, MaxBiquadFilters> biquads{};
+    /// Latched .enabled state from the previous render iteration, used to detect whether the
+    /// per-filter biquad state needs re-initialisation.
+    std::array<bool, MaxBiquadFilters> prev_biquad_enabled{};
 };
 
 } // namespace AudioCore::Renderer

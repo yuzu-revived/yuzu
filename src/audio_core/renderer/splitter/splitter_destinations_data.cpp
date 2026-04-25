@@ -65,6 +65,40 @@ void SplitterDestinationData::Update(const InParameter& params) {
     in_use = params.in_use;
 }
 
+void SplitterDestinationData::Update(const InParameterVersion2& params) {
+    if (params.id != id || params.magic != GetSplitterSendDataMagic()) {
+        return;
+    }
+
+    destination_id = params.mix_id;
+    mix_volumes = params.mix_volumes;
+    biquads = params.biquads;
+
+    if (!in_use && params.in_use) {
+        prev_mix_volumes = mix_volumes;
+        need_update = false;
+    }
+
+    in_use = params.in_use;
+}
+
+const VoiceInfo::BiquadFilterParameter& SplitterDestinationData::GetBiquadFilterParameter(
+    const u32 index) const {
+    return biquads[index];
+}
+
+bool SplitterDestinationData::IsBiquadFilterEnabled() const {
+    return biquads[0].enabled || biquads[1].enabled;
+}
+
+bool SplitterDestinationData::IsBiquadFilterEnabledPrev() const {
+    return prev_biquad_enabled[0];
+}
+
+void SplitterDestinationData::UpdateBiquadFilterEnabledPrev(const u32 index) {
+    prev_biquad_enabled[index] = biquads[index].enabled;
+}
+
 void SplitterDestinationData::MarkAsNeedToUpdateInternalState() {
     need_update = true;
 }
