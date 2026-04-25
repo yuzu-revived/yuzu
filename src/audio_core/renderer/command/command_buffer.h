@@ -469,11 +469,14 @@ public:
     /**
      * Generate a compressor command, adding it to the command list.
      *
-     * @param buffer_offset - Base mix buffer offset to use.
-     * @param effect_info   - Capture effect info to generate this command from.
-     * @param node_id       - Node id of the voice this command is generated for.
+     * @param buffer_offset    - Base mix buffer offset to use.
+     * @param effect_info      - Capture effect info to generate this command from.
+     * @param node_id          - Node id of the voice this command is generated for.
+     * @param dsp_result_state - REV13 DSP-shared EffectResultState pointer for statistics
+     *                           output. Pass 0 (or omit) to disable statistics writes.
      */
-    void GenerateCompressorCommand(s16 buffer_offset, EffectInfoBase& effect_info, s32 node_id);
+    void GenerateCompressorCommand(s16 buffer_offset, EffectInfoBase& effect_info, s32 node_id,
+                                   CpuAddr dsp_result_state = 0);
 
     /// Command list buffer generated commands will be added to
     std::span<u8> command_list{};

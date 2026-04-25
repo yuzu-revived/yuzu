@@ -268,7 +268,8 @@ public:
      * @param effect_info   - Compressor effect info.
      * @param node_id       - Node id of the mix this command is generated for.
      */
-    void GenerateCompressorCommand(s16 buffer_offset, EffectInfoBase& effect_info, s32 node_id);
+    void GenerateCompressorCommand(s16 buffer_offset, EffectInfoBase& effect_info, s32 node_id,
+                                   s32 effect_index);
 
     /**
      * Generate all effect commands for a mix.

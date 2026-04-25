@@ -3564,13 +3564,63 @@ u32 CommandProcessingTimeEstimatorVersion5::Estimate(const CaptureCommand& comma
 
 u32 CommandProcessingTimeEstimatorVersion5::Estimate(const CompressorCommand& command) const {
     if (command.enabled) {
+        if (command.parameter.statistics_enabled) {
+            // REV13 stats-enabled timings.
+            switch (command.parameter.channel_count) {
+            case 1:
+                switch (sample_count) {
+                case 160:
+                    return 22100;
+                case 240:
+                    return 32518;
+                default:
+                    LOG_ERROR(Service_Audio, "Invalid sample count {}", sample_count);
+                    return 0;
+                }
+            case 2:
+                switch (sample_count) {
+                case 160:
+                    return 33211;
+                case 240:
+                    return 49102;
+                default:
+                    LOG_ERROR(Service_Audio, "Invalid sample count {}", sample_count);
+                    return 0;
+                }
+            case 4:
+                switch (sample_count) {
+                case 160:
+                    return 41587;
+                case 240:
+                    return 61685;
+                default:
+                    LOG_ERROR(Service_Audio, "Invalid sample count {}", sample_count);
+                    return 0;
+                }
+            case 6:
+                switch (sample_count) {
+                case 160:
+                    return 58819;
+                case 240:
+                    return 87250;
+                default:
+                    LOG_ERROR(Service_Audio, "Invalid sample count {}", sample_count);
+                    return 0;
+                }
+            default:
+                LOG_ERROR(Service_Audio, "Invalid channel count {}",
+                          command.parameter.channel_count);
+                return 0;
+            }
+        }
+        // REV13 stats-disabled timings (slightly lower than the legacy values).
         switch (command.parameter.channel_count) {
         case 1:
             switch (sample_count) {
             case 160:
-                return static_cast<u32>(34430.570f);
+                return 19052;
             case 240:
-                return static_cast<u32>(51095.348f);
+                return 27963;
             default:
                 LOG_ERROR(Service_Audio, "Invalid sample count {}", sample_count);
                 return 0;
@@ -3578,9 +3628,9 @@ u32 CommandProcessingTimeEstimatorVersion5::Estimate(const CompressorCommand& co
         case 2:
             switch (sample_count) {
             case 160:
-                return static_cast<u32>(44253.320f);
+                return 29852;
             case 240:
-                return static_cast<u32>(65693.094f);
+                return 44016;
             default:
                 LOG_ERROR(Service_Audio, "Invalid sample count {}", sample_count);
                 return 0;
@@ -3588,9 +3638,9 @@ u32 CommandProcessingTimeEstimatorVersion5::Estimate(const CompressorCommand& co
         case 4:
             switch (sample_count) {
             case 160:
-                return static_cast<u32>(63827.457f);
+                return 37904;
             case 240:
-                return static_cast<u32>(95382.852f);
+                return 56183;
             default:
                 LOG_ERROR(Service_Audio, "Invalid sample count {}", sample_count);
                 return 0;
@@ -3598,9 +3648,9 @@ u32 CommandProcessingTimeEstimatorVersion5::Estimate(const CompressorCommand& co
         case 6:
             switch (sample_count) {
             case 160:
-                return static_cast<u32>(83361.484f);
+                return 55020;
             case 240:
-                return static_cast<u32>(124509.906f);
+                return 81862;
             default:
                 LOG_ERROR(Service_Audio, "Invalid sample count {}", sample_count);
                 return 0;

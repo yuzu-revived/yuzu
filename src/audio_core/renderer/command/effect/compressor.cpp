@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2022 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <algorithm>
 #include <cmath>
 #include <span>
 #include <vector>
@@ -8,6 +9,7 @@
 #include "audio_core/adsp/apps/audio_renderer/command_list_processor.h"
 #include "audio_core/renderer/command/effect/compressor.h"
 #include "audio_core/renderer/effect/compressor.h"
+#include "audio_core/renderer/effect/effect_result_state.h"
 
 namespace AudioCore::Renderer {
 
@@ -45,8 +47,12 @@ static void InitializeCompressorEffect(const CompressorInfo::ParameterVersion2& 
 static void ApplyCompressorEffect(const CompressorInfo::ParameterVersion2& params,
                                   CompressorInfo::State& state, bool enabled,
                                   std::span<std::span<const s32>> input_buffers,
-                                  std::span<std::span<s32>> output_buffers, u32 sample_count) {
+                                  std::span<std::span<s32>> output_buffers, u32 sample_count,
+                                  CompressorInfo::Statistics* stats) {
     if (enabled) {
+        if (stats != nullptr && params.statistics_reset) {
+            stats->Reset(params.channel_count);
+        }
         auto state_00{state.unk_00};
         auto state_04{state.unk_04};
         auto state_08{state.unk_08};
@@ -59,7 +65,8 @@ static void ApplyCompressorEffect(const CompressorInfo::ParameterVersion2& param
                 a += (input_sample * input_sample).to_float();
             }
 
-            state_00 += params.unk_24 * ((a / params.channel_count) - state.unk_00);
+            const f32 mean{a / static_cast<f32>(params.channel_count)};
+            state_00 += params.unk_24 * (mean - state.unk_00);
 
             auto b{-100.0f};
             auto c{0.0f};
@@ -93,6 +100,18 @@ static void ApplyCompressorEffect(const CompressorInfo::ParameterVersion2& param
             for (s16 channel = 0; channel < params.channel_count; channel++) {
                 output_buffers[channel][i] = static_cast<s32>(
                     static_cast<f32>(input_buffers[channel][i]) * state_08 * state.unk_20);
+            }
+
+            if (stats != nullptr) {
+                const f32 effective_gain{state_08 * state.unk_20};
+                stats->minimum_gain = std::min(stats->minimum_gain, effective_gain);
+                stats->maximum_mean = std::max(stats->maximum_mean, mean);
+                for (s16 channel = 0; channel < params.channel_count &&
+                                      channel < static_cast<s16>(stats->last_samples.size());
+                     channel++) {
+                    stats->last_samples[channel] = std::abs(
+                        static_cast<f32>(input_buffers[channel][i]) * (1.0f / 32768.0f));
+                }
             }
         }
 
@@ -144,8 +163,14 @@ void CompressorCommand::Process(const AudioRenderer::CommandListProcessor& proce
         }
     }
 
+    CompressorInfo::Statistics* stats{nullptr};
+    if (parameter.statistics_enabled && result_state != 0) {
+        auto* result{reinterpret_cast<EffectResultState*>(result_state)};
+        stats = reinterpret_cast<CompressorInfo::Statistics*>(result->state.data());
+    }
+
     ApplyCompressorEffect(parameter, *state_, effect_enabled, input_buffers, output_buffers,
-                          processor.sample_count);
+                          processor.sample_count, stats);
 }
 
 bool CompressorCommand::Verify(const AudioRenderer::CommandListProcessor& processor) {

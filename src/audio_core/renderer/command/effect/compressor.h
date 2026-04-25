@@ -54,6 +54,8 @@ struct CompressorCommand : ICommand {
     CpuAddr state;
     /// Game-supplied workbuffer (Unused)
     CpuAddr workbuffer;
+    /// REV13 dsp-shared EffectResultState pointer for compressor statistics (0 if disabled).
+    CpuAddr result_state;
     /// Is this effect enabled?
     bool effect_enabled;
 };

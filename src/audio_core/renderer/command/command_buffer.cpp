@@ -741,7 +741,7 @@ void CommandBuffer::GenerateCaptureCommand(const s32 node_id, EffectInfoBase& ef
 }
 
 void CommandBuffer::GenerateCompressorCommand(s16 buffer_offset, EffectInfoBase& effect_info,
-                                              s32 node_id) {
+                                              s32 node_id, CpuAddr dsp_result_state) {
     auto& cmd{GenerateStart<CompressorCommand, CommandId::Compressor>(node_id)};
 
     auto& parameter{
@@ -757,6 +757,7 @@ void CommandBuffer::GenerateCompressorCommand(s16 buffer_offset, EffectInfoBase&
             }
             cmd.parameter = parameter;
             cmd.workbuffer = state_buffer;
+            cmd.result_state = dsp_result_state;
             cmd.enabled = effect_info.IsEnabled();
         }
     }

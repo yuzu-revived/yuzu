@@ -50,9 +50,34 @@ public:
         /* 0x30 */ f32 out_gain;
         /* 0x34 */ ParameterState state;
         /* 0x35 */ bool makeup_gain_enabled;
+        /* 0x36 */ bool statistics_enabled; // REV13+
+        /* 0x37 */ bool statistics_reset;   // REV13+
     };
     static_assert(sizeof(ParameterVersion2) <= sizeof(EffectInfoBase::InParameterVersion2),
                   "CompressorInfo::ParameterVersion2 has the wrong size!");
+
+    /**
+     * REV13 result state written by the compressor command. Lives inside the effect's
+     * EffectResultState::state byte buffer.
+     */
+    struct Statistics {
+        /// Maximum input mean since last reset (or initialisation).
+        f32 maximum_mean;
+        /// Minimum output gain since last reset.
+        f32 minimum_gain;
+        /// Last filtered input sample per channel.
+        std::array<f32, MaxChannels> last_samples;
+
+        void Reset(s16 channel_count) {
+            maximum_mean = 0.0f;
+            minimum_gain = 1.0f;
+            for (s16 i = 0; i < channel_count && i < static_cast<s16>(last_samples.size()); i++) {
+                last_samples[i] = 0.0f;
+            }
+        }
+    };
+    static_assert(sizeof(Statistics) <= sizeof(EffectResultState::state),
+                  "CompressorInfo::Statistics does not fit in EffectResultState!");
 
     struct State {
         f32 unk_00;
@@ -93,6 +118,17 @@ public:
      * Update the info after command generation. Usually only changes its state.
      */
     void UpdateForCommandGeneration() override;
+
+    /**
+     * REV13: zero the result state (Statistics fields) when first allocated.
+     */
+    void InitializeResultState(EffectResultState& result_state) override;
+
+    /**
+     * REV13: copy the DSP-side result state back into the CPU-visible state so games can
+     * read the latest Statistics.
+     */
+    void UpdateResultState(EffectResultState& cpu_state, EffectResultState& dsp_state) override;
 
     /**
      * Get a workbuffer assigned to this effect with the given index.

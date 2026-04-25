@@ -10,7 +10,9 @@
 #include "audio_core/renderer/effect/biquad_filter.h"
 #include "audio_core/renderer/effect/buffer_mixer.h"
 #include "audio_core/renderer/effect/capture.h"
+#include "audio_core/renderer/effect/compressor.h"
 #include "audio_core/renderer/effect/effect_context.h"
+#include "audio_core/renderer/effect/effect_result_state.h"
 #include "audio_core/renderer/effect/light_limiter.h"
 #include "audio_core/renderer/mix/mix_context.h"
 #include "audio_core/renderer/performance/detail_aspect.h"
@@ -560,8 +562,21 @@ void CommandGenerator::GenerateCaptureCommand(const s16 buffer_offset, EffectInf
 }
 
 void CommandGenerator::GenerateCompressorCommand(const s16 buffer_offset,
-                                                 EffectInfoBase& effect_info, const s32 node_id) {
-    command_buffer.GenerateCompressorCommand(buffer_offset, effect_info, node_id);
+                                                 EffectInfoBase& effect_info, const s32 node_id,
+                                                 const s32 effect_index) {
+    CpuAddr dsp_result_state{0};
+    if (render_context.behavior->IsCompressorStatisticsSupported()) {
+        const auto* parameter{
+            reinterpret_cast<const CompressorInfo::ParameterVersion2*>(effect_info.GetParameter())};
+        if (parameter->statistics_enabled) {
+            auto& dsp_state{
+                effect_context.GetDspSharedResultState(static_cast<u32>(effect_index))};
+            dsp_result_state =
+                render_context.memory_pool_info->Translate(CpuAddr(&dsp_state),
+                                                           sizeof(EffectResultState));
+        }
+    }
+    command_buffer.GenerateCompressorCommand(buffer_offset, effect_info, node_id, dsp_result_state);
 }
 
 void CommandGenerator::GenerateEffectCommand(MixInfo& mix_info) {
@@ -675,7 +690,8 @@ void CommandGenerator::GenerateEffectCommand(MixInfo& mix_info) {
         case EffectInfoBase::Type::Compressor: {
             DetailAspect capture_detail_aspect(*this, entry_type, mix_info.node_id,
                                                PerformanceDetailType::Unk13);
-            GenerateCompressorCommand(mix_info.buffer_offset, effect_info, mix_info.node_id);
+            GenerateCompressorCommand(mix_info.buffer_offset, effect_info, mix_info.node_id,
+                                      effect_index);
             if (capture_detail_aspect.initialized) {
                 command_buffer.GeneratePerformanceCommand(
                     capture_detail_aspect.node_id, PerformanceState::Stop,

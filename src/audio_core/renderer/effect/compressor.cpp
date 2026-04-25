@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2022 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <cstring>
+
 #include "audio_core/renderer/effect/compressor.h"
 
 namespace AudioCore::Renderer {
@@ -31,6 +33,18 @@ void CompressorInfo::UpdateForCommandGeneration() {
 
     auto params{reinterpret_cast<ParameterVersion1*>(parameter.data())};
     params->state = ParameterState::Updated;
+}
+
+void CompressorInfo::InitializeResultState(EffectResultState& result_state) {
+    auto* params{reinterpret_cast<ParameterVersion2*>(parameter.data())};
+    auto* stats{reinterpret_cast<Statistics*>(result_state.state.data())};
+    *stats = {};
+    stats->Reset(params->channel_count);
+}
+
+void CompressorInfo::UpdateResultState(EffectResultState& cpu_state,
+                                       EffectResultState& dsp_state) {
+    std::memcpy(cpu_state.state.data(), dsp_state.state.data(), sizeof(Statistics));
 }
 
 CpuAddr CompressorInfo::GetWorkbuffer(s32 index) {
