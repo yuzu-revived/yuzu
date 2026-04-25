@@ -391,6 +391,24 @@ public:
      */
     bool IsCompressorStatisticsSupported() const;
 
+    /**
+     * Check if the REV14 splitter depop bug fix is supported.
+     * When supported, the splitter destination's previous-volume buffer is filled to
+     * zero on first activation rather than copying the current mix volumes.
+     *
+     * @return True if supported, otherwise false.
+     */
+    bool IsSplitterDepopBugFixEnabled() const;
+
+    /**
+     * Check if the REV15 float biquad filter coefficients are supported.
+     * When supported, voice / splitter / biquad-filter-effect input parameters carry
+     * f32 numerator/denominator coefficients instead of Q14 s16 fixed-point.
+     *
+     * @return True if supported, otherwise false.
+     */
+    bool IsBiquadFilterParameterFloatSupported() const;
+
     /// Host version
     u32 process_revision;
     /// User version

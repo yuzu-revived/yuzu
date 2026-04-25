@@ -202,4 +202,12 @@ bool BehaviorInfo::IsCompressorStatisticsSupported() const {
     return CheckFeatureSupported(SupportTags::CompressorStatistics, user_revision);
 }
 
+bool BehaviorInfo::IsSplitterDepopBugFixEnabled() const {
+    return CheckFeatureSupported(SupportTags::SplitterDepopBugFix, user_revision);
+}
+
+bool BehaviorInfo::IsBiquadFilterParameterFloatSupported() const {
+    return CheckFeatureSupported(SupportTags::BiquadFilterParameterFloat, user_revision);
+}
+
 } // namespace AudioCore::Renderer

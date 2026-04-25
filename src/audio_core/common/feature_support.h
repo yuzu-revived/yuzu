@@ -13,7 +13,7 @@
 #include "common/polyfill_ranges.h"
 
 namespace AudioCore {
-constexpr u32 CurrentRevision = 13;
+constexpr u32 CurrentRevision = 15;
 
 enum class SupportTags {
     CommandProcessingTimeEstimatorVersion5,
@@ -48,6 +48,8 @@ enum class SupportTags {
     BiquadFilterParameterForSplitter,
     SplitterPrevVolumeReset,
     CompressorStatistics,
+    SplitterDepopBugFix,
+    BiquadFilterParameterFloat,
 
     // Not a real tag, just here to get the count.
     Size
@@ -95,6 +97,8 @@ constexpr bool CheckFeatureSupported(SupportTags tag, u32 user_revision) {
             {SupportTags::BiquadFilterParameterForSplitter, 12},
             {SupportTags::SplitterPrevVolumeReset, 13},
             {SupportTags::CompressorStatistics, 13},
+            {SupportTags::SplitterDepopBugFix, 14},
+            {SupportTags::BiquadFilterParameterFloat, 15},
         }};
 
     const auto& feature =
