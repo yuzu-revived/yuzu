@@ -7,6 +7,7 @@
 
 #include "audio_core/renderer/splitter/splitter_destinations_data.h"
 #include "audio_core/renderer/splitter/splitter_info.h"
+#include "audio_core/renderer/voice/voice_state.h"
 #include "common/common_types.h"
 
 namespace AudioCore {
@@ -36,6 +37,12 @@ class SplitterContext {
 
 public:
     /**
+     * Number of biquad filter state slots reserved per splitter destination.
+     * Two cascaded filters * (current + previous) state = 4 entries.
+     */
+    static constexpr u32 BqfStatesPerDestination = 4;
+
+    /**
      * Get a destination mix from the given splitter and destination index.
      *
      * @param splitter_id    - Splitter index to get from.
@@ -43,6 +50,13 @@ public:
      * @return Pointer to the found destination. May be nullptr.
      */
     SplitterDestinationData* GetDestinationData(s32 splitter_id, s32 destination_id);
+
+    /**
+     * Get the biquad filter state slice for a given splitter destination.
+     * Empty if REV12 splitter biquad is not supported.
+     */
+    std::span<VoiceState::BiquadFilterState> GetBiquadFilterState(
+        const SplitterDestinationData& destination);
 
     /**
      * Get a splitter from the given index.
@@ -183,6 +197,12 @@ private:
     s32 destinations_count{};
     /// Is the splitter bug fixed?
     bool splitter_bug_fixed{};
+    /// Is REV12 splitter biquad supported (parsed v2 input + new commands)?
+    bool biquad_filter_supported{};
+    /// Biquad filter state buffer; sized destinations_count * BqfStatesPerDestination when
+    /// biquad_filter_supported is true, empty otherwise. Indexed as
+    /// [destination_id * BqfStatesPerDestination + slot].
+    std::span<VoiceState::BiquadFilterState> splitter_bqf_states{};
 };
 
 } // namespace Renderer

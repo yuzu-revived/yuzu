@@ -80,6 +80,24 @@ bool SplitterContext::Initialize(const BehaviorInfo& behavior,
             return false;
         }
 
+        biquad_filter_supported = behavior.IsBiquadFilterParameterForSplitterEnabled();
+        if (biquad_filter_supported) {
+            const auto bqf_count =
+                static_cast<u32>(params.splitter_destinations) * BqfStatesPerDestination;
+            splitter_bqf_states =
+                allocator.Allocate<VoiceState::BiquadFilterState>(bqf_count, 0x10);
+            if (splitter_bqf_states.empty()) {
+                splitter_infos = {};
+                splitter_destinations = nullptr;
+                return false;
+            }
+            for (auto& state : splitter_bqf_states) {
+                state = {};
+            }
+        } else {
+            splitter_bqf_states = {};
+        }
+
         Setup(splitter_infos, params.splitter_infos, splitter_destinations,
               params.splitter_destinations, behavior.IsSplitterBugFixed());
     }
@@ -134,22 +152,47 @@ u32 SplitterContext::UpdateInfo(const u8* input, u32 offset, const u32 splitter_
 
 u32 SplitterContext::UpdateData(const u8* input, u32 offset, const u32 count) {
     for (u32 i = 0; i < count; i++) {
-        auto data_header{
-            reinterpret_cast<const SplitterDestinationData::InParameter*>(input + offset)};
+        if (biquad_filter_supported) {
+            auto data_header{reinterpret_cast<const SplitterDestinationData::InParameterVersion2*>(
+                input + offset)};
 
-        if (data_header->magic != GetSplitterSendDataMagic()) {
-            continue;
+            if (data_header->magic != GetSplitterSendDataMagic()) {
+                continue;
+            }
+
+            if (data_header->id < 0 || data_header->id > destinations_count) {
+                continue;
+            }
+
+            splitter_destinations[data_header->id].Update(*data_header);
+            offset += sizeof(SplitterDestinationData::InParameterVersion2);
+        } else {
+            auto data_header{
+                reinterpret_cast<const SplitterDestinationData::InParameter*>(input + offset)};
+
+            if (data_header->magic != GetSplitterSendDataMagic()) {
+                continue;
+            }
+
+            if (data_header->id < 0 || data_header->id > destinations_count) {
+                continue;
+            }
+
+            splitter_destinations[data_header->id].Update(*data_header);
+            offset += sizeof(SplitterDestinationData::InParameter);
         }
-
-        if (data_header->id < 0 || data_header->id > destinations_count) {
-            continue;
-        }
-
-        splitter_destinations[data_header->id].Update(*data_header);
-        offset += sizeof(SplitterDestinationData::InParameter);
     }
 
     return offset;
+}
+
+std::span<VoiceState::BiquadFilterState> SplitterContext::GetBiquadFilterState(
+    const SplitterDestinationData& destination) {
+    if (splitter_bqf_states.empty()) {
+        return {};
+    }
+    const auto offset = static_cast<size_t>(destination.GetId()) * BqfStatesPerDestination;
+    return splitter_bqf_states.subspan(offset, BqfStatesPerDestination);
 }
 
 void SplitterContext::UpdateInternalState() {
@@ -211,6 +254,14 @@ u64 SplitterContext::CalcWorkBufferSize(const BehaviorInfo& behavior,
     if (behavior.IsSplitterBugFixed()) {
         size += Common::AlignUp(params.splitter_destinations * sizeof(u32), 0x10);
     }
+
+    if (behavior.IsBiquadFilterParameterForSplitterEnabled()) {
+        size += Common::AlignUp(static_cast<u64>(params.splitter_destinations) *
+                                    BqfStatesPerDestination *
+                                    sizeof(VoiceState::BiquadFilterState),
+                                0x10);
+    }
+
     return size;
 }
 
