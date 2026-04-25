@@ -25,6 +25,7 @@ class VoiceInfo;
 struct VoiceState;
 class MixInfo;
 class SinkInfoBase;
+class SplitterDestinationData;
 
 /**
  * Generates all commands to build up a command list, which are sent to the AudioRender for
@@ -138,6 +139,22 @@ public:
                                  std::span<const f32> prev_mix_volumes,
                                  const VoiceState& voice_state, s16 output_index, s16 buffer_count,
                                  s16 input_index, s32 node_id);
+
+    /**
+     * REV12 splitter biquad path: emit BiquadFilterAndMix / MultiTapBiquadFilterAndMix commands
+     * for a voice's splitter destination instead of plain MixRamp.
+     */
+    void GenerateVoiceMixWithSplitterCommand(SplitterDestinationData& destination,
+                                             const VoiceState& voice_state, s16 output_index,
+                                             s16 buffer_count, s16 input_index, s32 node_id);
+
+    /**
+     * REV12 splitter biquad path for mix-to-mix routing: emit a fused biquad-and-mix command
+     * (or a multi-tap variant) for one (input, output) pair through a splitter destination.
+     */
+    void GenerateMixWithSplitterCommand(SplitterDestinationData& destination, s16 input_index,
+                                        s16 output_index, f32 volume, bool& is_first_mix_buffer,
+                                        s32 node_id);
 
     /**
      * Generate a biquad filter command for a voice.
