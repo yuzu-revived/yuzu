@@ -23,6 +23,8 @@ public:
         /* 0x08 */ std::array<f32, MaxMixBuffers> mix_volumes;
         /* 0x68 */ u32 mix_id;
         /* 0x6C */ bool in_use;
+        /* 0x6D */ bool reset_prev_volume; // REV13+; previously part of trailing padding
+        /* 0x6E */ std::array<u8, 2> reserved;
     };
     static_assert(sizeof(InParameter) == 0x70,
                   "SplitterDestinationData::InParameter has the wrong size!");
@@ -39,7 +41,8 @@ public:
         /* 0x68 */ u32 mix_id;
         /* 0x6C */ std::array<VoiceInfo::BiquadFilterParameter, MaxBiquadFilters> biquads;
         /* 0x84 */ bool in_use;
-        /* 0x85 */ std::array<u8, 11> reserved;
+        /* 0x85 */ bool reset_prev_volume; // REV13+; previously part of reserved padding
+        /* 0x86 */ std::array<u8, 10> reserved;
     };
     static_assert(sizeof(InParameterVersion2) == 0x90,
                   "SplitterDestinationData::InParameterVersion2 has the wrong size!");
@@ -105,16 +108,22 @@ public:
     /**
      * Update this destination.
      *
-     * @param params - Input parameters to update the destination.
+     * @param params                       - Input parameters to update the destination.
+     * @param is_prev_volume_reset_supported - When true (REV13+), use
+     *                                         params.reset_prev_volume to decide whether
+     *                                         the previous mix volume is overwritten with
+     *                                         the current. When false, fall back to the
+     *                                         legacy implicit reset on first in-use.
      */
-    void Update(const InParameter& params);
+    void Update(const InParameter& params, bool is_prev_volume_reset_supported);
 
     /**
      * Update this destination from REV12 (with splitter biquad filter) parameters.
      *
-     * @param params - Version 2 input parameters to update the destination.
+     * @param params                       - Version 2 input parameters.
+     * @param is_prev_volume_reset_supported - See Update(InParameter,...).
      */
-    void Update(const InParameterVersion2& params);
+    void Update(const InParameterVersion2& params, bool is_prev_volume_reset_supported);
 
     /**
      * Get the biquad filter parameter for the given index (0..MaxBiquadFilters-1).

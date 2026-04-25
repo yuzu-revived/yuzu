@@ -49,7 +49,8 @@ std::span<f32> SplitterDestinationData::GetMixVolumePrev() {
     return prev_mix_volumes;
 }
 
-void SplitterDestinationData::Update(const InParameter& params) {
+void SplitterDestinationData::Update(const InParameter& params,
+                                     const bool is_prev_volume_reset_supported) {
     if (params.id != id || params.magic != GetSplitterSendDataMagic()) {
         return;
     }
@@ -57,7 +58,9 @@ void SplitterDestinationData::Update(const InParameter& params) {
     destination_id = params.mix_id;
     mix_volumes = params.mix_volumes;
 
-    if (!in_use && params.in_use) {
+    const bool reset_prev = is_prev_volume_reset_supported ? params.reset_prev_volume
+                                                           : (!in_use && params.in_use);
+    if (reset_prev) {
         prev_mix_volumes = mix_volumes;
         need_update = false;
     }
@@ -65,7 +68,8 @@ void SplitterDestinationData::Update(const InParameter& params) {
     in_use = params.in_use;
 }
 
-void SplitterDestinationData::Update(const InParameterVersion2& params) {
+void SplitterDestinationData::Update(const InParameterVersion2& params,
+                                     const bool is_prev_volume_reset_supported) {
     if (params.id != id || params.magic != GetSplitterSendDataMagic()) {
         return;
     }
@@ -74,7 +78,9 @@ void SplitterDestinationData::Update(const InParameterVersion2& params) {
     mix_volumes = params.mix_volumes;
     biquads = params.biquads;
 
-    if (!in_use && params.in_use) {
+    const bool reset_prev = is_prev_volume_reset_supported ? params.reset_prev_volume
+                                                           : (!in_use && params.in_use);
+    if (reset_prev) {
         prev_mix_volumes = mix_volumes;
         need_update = false;
     }

@@ -81,6 +81,7 @@ bool SplitterContext::Initialize(const BehaviorInfo& behavior,
         }
 
         biquad_filter_supported = behavior.IsBiquadFilterParameterForSplitterEnabled();
+        prev_volume_reset_supported = behavior.IsSplitterPrevVolumeResetSupported();
         if (biquad_filter_supported) {
             const auto bqf_count =
                 static_cast<u32>(params.splitter_destinations) * BqfStatesPerDestination;
@@ -164,7 +165,8 @@ u32 SplitterContext::UpdateData(const u8* input, u32 offset, const u32 count) {
                 continue;
             }
 
-            splitter_destinations[data_header->id].Update(*data_header);
+            splitter_destinations[data_header->id].Update(*data_header,
+                                                          prev_volume_reset_supported);
             offset += sizeof(SplitterDestinationData::InParameterVersion2);
         } else {
             auto data_header{
@@ -178,7 +180,8 @@ u32 SplitterContext::UpdateData(const u8* input, u32 offset, const u32 count) {
                 continue;
             }
 
-            splitter_destinations[data_header->id].Update(*data_header);
+            splitter_destinations[data_header->id].Update(*data_header,
+                                                          prev_volume_reset_supported);
             offset += sizeof(SplitterDestinationData::InParameter);
         }
     }
