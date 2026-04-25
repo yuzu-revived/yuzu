@@ -178,6 +178,7 @@ ILibraryAppletCreator::ILibraryAppletCreator(Core::System& system_, std::shared_
         {0, D<&ILibraryAppletCreator::CreateLibraryApplet>, "CreateLibraryApplet"},
         {1, nullptr, "TerminateAllLibraryApplets"},
         {2, nullptr, "AreAnyLibraryAppletsLeft"},
+        {3, D<&ILibraryAppletCreator::CreateLibraryAppletEx>, "CreateLibraryAppletEx"},
         {10, D<&ILibraryAppletCreator::CreateStorage>, "CreateStorage"},
         {11, D<&ILibraryAppletCreator::CreateTransferMemoryStorage>, "CreateTransferMemoryStorage"},
         {12, D<&ILibraryAppletCreator::CreateHandleStorage>, "CreateHandleStorage"},
@@ -209,6 +210,15 @@ Result ILibraryAppletCreator::CreateLibraryApplet(
     m_applet->library_applet_launchable_event.Signal();
     *out_library_applet_accessor = library_applet;
     R_SUCCEED();
+}
+
+Result ILibraryAppletCreator::CreateLibraryAppletEx(
+    Out<SharedPointer<ILibraryAppletAccessor>> out_library_applet_accessor, AppletId applet_id,
+    LibraryAppletMode library_applet_mode, u64 thread_id) {
+    LOG_DEBUG(Service_AM, "called with applet_id={} applet_mode={} thread_id={:#x}", applet_id,
+              library_applet_mode, thread_id);
+    R_RETURN(this->CreateLibraryApplet(out_library_applet_accessor, applet_id,
+                                       library_applet_mode));
 }
 
 Result ILibraryAppletCreator::CreateStorage(Out<SharedPointer<IStorage>> out_storage, s64 size) {
