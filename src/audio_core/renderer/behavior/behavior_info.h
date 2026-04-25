@@ -370,6 +370,27 @@ public:
      */
     bool IsBiquadFilterParameterForSplitterEnabled() const;
 
+    /**
+     * Check if explicit reset of the splitter destination's previous mix volume is supported.
+     * Added in REV13. When supported, the input parameter's reset_prev_volume flag controls
+     * whether the previous mix volume is overwritten with the current; previously this only
+     * happened implicitly on first use after a destination became in-use.
+     *
+     * @return True if supported, otherwise false.
+     */
+    bool IsSplitterPrevVolumeResetSupported() const;
+
+    /**
+     * Check if compressor effect statistics are supported.
+     * Added in REV13. When supported, the compressor parameter's statistics_enabled flag
+     * causes the renderer to write maximum-mean / minimum-gain / per-channel last-sample
+     * stats into the effect result state buffer each iteration, and statistics_reset zeros
+     * those stats at the start of an iteration.
+     *
+     * @return True if supported, otherwise false.
+     */
+    bool IsCompressorStatisticsSupported() const;
+
     /// Host version
     u32 process_revision;
     /// User version

@@ -194,4 +194,12 @@ bool BehaviorInfo::IsBiquadFilterParameterForSplitterEnabled() const {
     return CheckFeatureSupported(SupportTags::BiquadFilterParameterForSplitter, user_revision);
 }
 
+bool BehaviorInfo::IsSplitterPrevVolumeResetSupported() const {
+    return CheckFeatureSupported(SupportTags::SplitterPrevVolumeReset, user_revision);
+}
+
+bool BehaviorInfo::IsCompressorStatisticsSupported() const {
+    return CheckFeatureSupported(SupportTags::CompressorStatistics, user_revision);
+}
+
 } // namespace AudioCore::Renderer
