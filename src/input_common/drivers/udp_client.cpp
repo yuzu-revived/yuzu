@@ -113,7 +113,7 @@ private:
     }
 
     SocketCallback callback;
-    boost::asio::io_service io_service;
+    boost::asio::io_context io_service;
     boost::asio::basic_waitable_timer<clock> timer;
     udp::socket socket;
 
