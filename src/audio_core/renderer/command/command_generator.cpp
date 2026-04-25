@@ -581,10 +581,26 @@ void CommandGenerator::GenerateCompressorCommand(const s16 buffer_offset,
 
 void CommandGenerator::GenerateEffectCommand(MixInfo& mix_info) {
     const auto effect_count{effect_context.GetCount()};
+    const auto order_buffer_size{mix_info.effect_order_buffer.size()};
     for (u32 i = 0; i < effect_count; i++) {
+        // The mix's effect_order_buffer can be sized smaller than the renderer's total
+        // effect count when mix_info was set up with effect_count != effect_context count.
+        // Indexing beyond the buffer is UB and lets garbage effect_index values reach
+        // GetInfo, which returns a reference to past-the-end memory; the resulting
+        // virtual UpdateForCommandGeneration call crashes with a corrupted vtable.
+        if (i >= order_buffer_size) {
+            break;
+        }
         const auto effect_index{mix_info.effect_order_buffer[i]};
         if (effect_index == -1) {
             break;
+        }
+        if (effect_index < 0 || static_cast<u32>(effect_index) >= effect_count) {
+            LOG_ERROR(Service_Audio,
+                      "MixInfo effect_order_buffer[{}]={} out of range (effect_count={}); "
+                      "skipping",
+                      i, effect_index, effect_count);
+            continue;
         }
 
         auto& effect_info = effect_context.GetInfo(effect_index);
@@ -702,7 +718,11 @@ void CommandGenerator::GenerateEffectCommand(MixInfo& mix_info) {
         default:
             LOG_ERROR(Service_Audio, "Invalid effect type {}",
                       static_cast<u32>(effect_info.GetType()));
-            break;
+            // Skip UpdateForCommandGeneration: an invalid effect type often indicates the
+            // effect reference is to garbage memory (out-of-range effect_order_buffer
+            // entry slipping past the bounds check), in which case the virtual call below
+            // would crash on a corrupted vtable.
+            continue;
         }
 
         effect_info.UpdateForCommandGeneration();
