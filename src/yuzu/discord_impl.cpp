@@ -24,7 +24,7 @@ DiscordImpl::DiscordImpl(Core::System& system_) : system{system_} {
     DiscordEventHandlers handlers{};
     // The number is the client ID for yuzu, it's used for images and the
     // application name
-    Discord_Initialize("712465656758665259", &handlers, 1, nullptr);
+    Discord_Initialize("1480158451542786048", &handlers, 1, nullptr);
 }
 
 DiscordImpl::~DiscordImpl() {
