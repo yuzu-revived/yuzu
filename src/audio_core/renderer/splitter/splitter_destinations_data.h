@@ -47,6 +47,37 @@ public:
     static_assert(sizeof(InParameterVersion2) == 0x90,
                   "SplitterDestinationData::InParameterVersion2 has the wrong size!");
 
+    /**
+     * REV15 biquad filter parameter with f32 coefficients (0x18 bytes).
+     * Switch wire format only; yuzu converts to the internal Q14 s16 representation at the
+     * parsing gateway.
+     */
+    struct BiquadFilterParameterFloat {
+        /* 0x00 */ bool enabled;
+        /* 0x01 */ std::array<u8, 3> reserved;
+        /* 0x04 */ std::array<f32, 3> b;
+        /* 0x10 */ std::array<f32, 2> a;
+    };
+    static_assert(sizeof(BiquadFilterParameterFloat) == 0x18,
+                  "SplitterDestinationData::BiquadFilterParameterFloat has the wrong size!");
+
+    /**
+     * REV15 splitter destination input header. Same shape as version 2 but the biquad
+     * coefficients are f32 instead of Q14 s16, growing each filter by 0xC bytes.
+     */
+    struct InParameterVersion2b {
+        /* 0x00 */ u32 magic; // 'SNDD'
+        /* 0x04 */ s32 id;
+        /* 0x08 */ std::array<f32, MaxMixBuffers> mix_volumes;
+        /* 0x68 */ u32 mix_id;
+        /* 0x6C */ std::array<BiquadFilterParameterFloat, MaxBiquadFilters> biquads;
+        /* 0x9C */ bool in_use;
+        /* 0x9D */ bool reset_prev_volume;
+        /* 0x9E */ std::array<u8, 10> reserved;
+    };
+    static_assert(sizeof(InParameterVersion2b) == 0xA8,
+                  "SplitterDestinationData::InParameterVersion2b has the wrong size!");
+
     SplitterDestinationData(s32 id);
 
     /**
@@ -124,6 +155,16 @@ public:
      * @param is_prev_volume_reset_supported - See Update(InParameter,...).
      */
     void Update(const InParameterVersion2& params, bool is_prev_volume_reset_supported);
+
+    /**
+     * Update this destination from REV15 (float biquad coefficients) parameters.
+     * The f32 biquad coefficients are converted to the internal Q14 s16 representation
+     * at this gateway.
+     *
+     * @param params                       - Version 2b input parameters.
+     * @param is_prev_volume_reset_supported - See Update(InParameter,...).
+     */
+    void Update(const InParameterVersion2b& params, bool is_prev_volume_reset_supported);
 
     /**
      * Get the biquad filter parameter for the given index (0..MaxBiquadFilters-1).

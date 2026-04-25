@@ -201,6 +201,8 @@ private:
     bool biquad_filter_supported{};
     /// Is REV13 splitter prev-volume explicit-reset supported?
     bool prev_volume_reset_supported{};
+    /// Is REV15 float biquad coefficients supported (v2b input parsing)?
+    bool float_biquad_supported{};
     /// Biquad filter state buffer; sized destinations_count * BqfStatesPerDestination when
     /// biquad_filter_supported is true, empty otherwise. Indexed as
     /// [destination_id * BqfStatesPerDestination + slot].
