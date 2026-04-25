@@ -121,6 +121,8 @@ struct Applet {
     Event library_applet_launchable_event;
     Event accumulated_suspended_tick_changed_event;
     Event sleep_lock_event;
+    /// IApplicationFunctions cmd 210 (20.0.0+); semantics unknown, yuzu never signals it.
+    Event unknown_event;
 
     // Frontend state
     std::shared_ptr<Frontend::FrontendApplet> frontend{};

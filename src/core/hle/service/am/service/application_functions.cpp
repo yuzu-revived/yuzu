@@ -85,6 +85,7 @@ IApplicationFunctions::IApplicationFunctions(Core::System& system_, std::shared_
         {181, nullptr, "UpgradeLaunchRequiredVersion"},
         {190, nullptr, "SendServerMaintenanceOverlayNotification"},
         {200, nullptr, "GetLastApplicationExitReason"},
+        {210, D<&IApplicationFunctions::GetUnknownEvent>, "GetUnknownEvent"},
         {500, nullptr, "StartContinuousRecordingFlushForDebug"},
         {1000, nullptr, "CreateMovieMaker"},
         {1001, D<&IApplicationFunctions::PrepareForJit>, "PrepareForJit"},
@@ -443,6 +444,15 @@ Result IApplicationFunctions::GetGpuErrorDetectedSystemEvent(
     OutCopyHandle<Kernel::KReadableEvent> out_event) {
     LOG_WARNING(Service_AM, "(STUBBED) called");
     *out_event = m_applet->gpu_error_detected_event.GetHandle();
+    R_SUCCEED();
+}
+
+Result IApplicationFunctions::GetUnknownEvent(OutCopyHandle<Kernel::KReadableEvent> out_event) {
+    // Cmd 210 added in firmware 20.0.0. Switch firmware semantics not publicly documented;
+    // returning an event handle the game can wait on satisfies the contract. yuzu never
+    // signals the event, matching Ryujinx's stub behaviour.
+    LOG_WARNING(Service_AM, "(STUBBED) called");
+    *out_event = m_applet->unknown_event.GetHandle();
     R_SUCCEED();
 }
 
