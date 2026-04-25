@@ -36,6 +36,23 @@ public:
                   "BiquadFilterInfo::ParameterVersion2 has the wrong size!");
 
     /**
+     * REV15 biquad filter effect parameter (0x24 bytes). Same field set as ParameterVersion2,
+     * but the b/a coefficients are now f32 instead of Q14 s16.
+     * yuzu converts to ParameterVersion2 at the parsing gateway (info_updater).
+     */
+    struct ParameterVersion3 {
+        /* 0x00 */ std::array<s8, MaxChannels> inputs;
+        /* 0x06 */ std::array<s8, MaxChannels> outputs;
+        /* 0x0C */ std::array<f32, 3> b;
+        /* 0x18 */ std::array<f32, 2> a;
+        /* 0x20 */ s8 channel_count;
+        /* 0x21 */ ParameterState state;
+        /* 0x22 */ std::array<u8, 2> reserved;
+    };
+    static_assert(sizeof(ParameterVersion3) == 0x24,
+                  "BiquadFilterInfo::ParameterVersion3 has the wrong size!");
+
+    /**
      * Update the info with new parameters, version 1.
      *
      * @param error_info  - Used to write call result code.

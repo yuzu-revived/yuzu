@@ -3,11 +3,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <limits>
 
 #include "audio_core/common/feature_support.h"
 #include "audio_core/renderer/behavior/behavior_info.h"
 #include "audio_core/renderer/behavior/info_updater.h"
+#include "audio_core/renderer/effect/biquad_filter.h"
 #include "audio_core/renderer/effect/effect_context.h"
 #include "audio_core/renderer/effect/effect_reset.h"
 #include "audio_core/renderer/memory/memory_pool_info.h"
@@ -264,6 +266,7 @@ Result InfoUpdater::UpdateEffectsVersion2(EffectContext& effect_context, const b
                            behaviour.IsMemoryForceMappingEnabled());
 
     const auto effect_count{effect_context.GetCount()};
+    const bool float_biquads{behaviour.IsBiquadFilterParameterFloatSupported()};
 
     std::span<const EffectInfoBase::InParameterVersion2> in_params{
         reinterpret_cast<const EffectInfoBase::InParameterVersion2*>(input), effect_count};
@@ -278,7 +281,31 @@ Result InfoUpdater::UpdateEffectsVersion2(EffectContext& effect_context, const b
         }
 
         BehaviorInfo::ErrorInfo error_info{};
-        effect_info->Update(error_info, in_params[i], pool_mapper);
+
+        // REV15 BiquadFilter effect: SpecificData carries f32 coefficients (ParameterVersion3,
+        // 0x24). Convert to the legacy Q14 ParameterVersion2 (0x18) in a local copy so the
+        // effect Update() path stays unchanged.
+        if (float_biquads && in_params[i].type == EffectInfoBase::Type::BiquadFilter) {
+            EffectInfoBase::InParameterVersion2 converted{in_params[i]};
+            const auto* v3{reinterpret_cast<const BiquadFilterInfo::ParameterVersion3*>(
+                converted.specific.data())};
+            BiquadFilterInfo::ParameterVersion2 v2{};
+            v2.inputs = v3->inputs;
+            v2.outputs = v3->outputs;
+            for (size_t j = 0; j < v2.b.size(); j++) {
+                v2.b[j] = BiquadFloatToQ14(v3->b[j]);
+            }
+            for (size_t j = 0; j < v2.a.size(); j++) {
+                v2.a[j] = BiquadFloatToQ14(v3->a[j]);
+            }
+            v2.channel_count = v3->channel_count;
+            v2.state = v3->state;
+            std::memcpy(converted.specific.data(), &v2, sizeof(v2));
+            effect_info->Update(error_info, converted, pool_mapper);
+        } else {
+            effect_info->Update(error_info, in_params[i], pool_mapper);
+        }
+
 
         if (error_info.error_code.IsError()) {
             behaviour.AppendError(error_info);
