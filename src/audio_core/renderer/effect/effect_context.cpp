@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2022 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <cstring>
+
 #include "audio_core/renderer/effect/effect_context.h"
 #include "common/logging/log.h"
 
@@ -46,8 +48,23 @@ void EffectContext::UpdateStateByDspShared() {
                   dsp_state_count, effect_infos.size(), result_states_cpu.size(),
                   result_states_dsp.size(), bound);
     }
+    // De-virtualized dispatch. effect_infos entries are constructed in-place via
+    // ResetEffect() on the IPC thread (effect_reset.h), which does *effect = {} followed
+    // by std::construct_at<Derived>() — racing the renderer thread that reads through the
+    // vtable here, with no synchronization. Only LightLimiter and Compressor actually
+    // override UpdateResultState with real work; both simply memcpy the full 0x80-byte
+    // result state. Avoid the vtable load entirely by dispatching on the (non-virtual)
+    // type field. Unknown / Invalid types are skipped.
     for (size_t i = 0; i < bound; i++) {
-        effect_infos[i].UpdateResultState(result_states_cpu[i], result_states_dsp[i]);
+        switch (effect_infos[i].GetType()) {
+        case EffectInfoBase::Type::Compressor:
+        case EffectInfoBase::Type::LightLimiter:
+            std::memcpy(result_states_cpu[i].state.data(), result_states_dsp[i].state.data(),
+                        result_states_cpu[i].state.size());
+            break;
+        default:
+            break;
+        }
     }
 }
 
