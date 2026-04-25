@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "audio_core/renderer/effect/effect_context.h"
+#include "common/logging/log.h"
 
 namespace AudioCore::Renderer {
 
@@ -33,7 +34,19 @@ u32 EffectContext::GetCount() const {
 }
 
 void EffectContext::UpdateStateByDspShared() {
-    for (size_t i = 0; i < dsp_state_count; i++) {
+    // Bound the loop by the smallest of the three spans to avoid OOB virtual dispatch on a
+    // past-the-end EffectInfoBase reference (corrupted vtable -> host crash). All three
+    // should be the same size when V2 effect-info is enabled, but defending is cheap.
+    const size_t bound = std::min({static_cast<size_t>(dsp_state_count), effect_infos.size(),
+                                   result_states_cpu.size(), result_states_dsp.size()});
+    if (bound != dsp_state_count) {
+        LOG_ERROR(Service_Audio,
+                  "EffectContext span size mismatch (dsp_state_count={}, effect_infos={}, "
+                  "result_states_cpu={}, result_states_dsp={}); clamping to {}",
+                  dsp_state_count, effect_infos.size(), result_states_cpu.size(),
+                  result_states_dsp.size(), bound);
+    }
+    for (size_t i = 0; i < bound; i++) {
         effect_infos[i].UpdateResultState(result_states_cpu[i], result_states_dsp[i]);
     }
 }
