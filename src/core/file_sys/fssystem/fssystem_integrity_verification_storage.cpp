@@ -69,6 +69,14 @@ size_t IntegrityVerificationStorage::Read(u8* buffer, size_t size, size_t offset
     // Validate arguments.
     ASSERT(buffer != nullptr);
 
+    // Defensive: Initialize() bails on null storages without setting m_data_storage, so
+    // Read on a never-initialized object would dereference null. Treat as a 0-byte read
+    // so the outer NCA loader fails its size/header checks gracefully instead of taking
+    // down the host.
+    if (m_data_storage == nullptr) {
+        return 0;
+    }
+
     // Validate the offset.
     s64 data_size = m_data_storage->GetSize();
     ASSERT(offset <= static_cast<size_t>(data_size));
@@ -98,6 +106,9 @@ size_t IntegrityVerificationStorage::Read(u8* buffer, size_t size, size_t offset
 }
 
 size_t IntegrityVerificationStorage::GetSize() const {
+    if (m_data_storage == nullptr) {
+        return 0;
+    }
     return m_data_storage->GetSize();
 }
 
