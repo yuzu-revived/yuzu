@@ -75,6 +75,11 @@ NvResult nvhost_ctrl_gpu::Ioctl3(DeviceFD fd, Ioctl command, std::span<const u8>
         case 0x6:
             return WrapFixedInlOut(this, &nvhost_ctrl_gpu::GetTPCMasks3, input, output,
                                    inline_output);
+        case 0x12:
+            // No inline-output payload; behaves the same as Ioctl1.
+            return WrapFixed(this, &nvhost_ctrl_gpu::NumVsms, input, output);
+        case 0x13:
+            return WrapFixed(this, &nvhost_ctrl_gpu::VsmsMapping, input, output);
         default:
             break;
         }
