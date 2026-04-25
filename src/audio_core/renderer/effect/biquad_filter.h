@@ -36,20 +36,23 @@ public:
                   "BiquadFilterInfo::ParameterVersion2 has the wrong size!");
 
     /**
-     * REV15 biquad filter effect parameter (0x24 bytes). Same field set as ParameterVersion2,
-     * but the b/a coefficients are now f32 instead of Q14 s16.
-     * yuzu converts to ParameterVersion2 at the parsing gateway (info_updater).
+     * REV15 biquad filter effect parameter (0x28 bytes). Same field set as ParameterVersion2,
+     * but the b/a coefficients are now f32 instead of Q14 s16. The wire format includes a
+     * 4-byte padding at 0x0C so the float coefficients are 4-byte aligned (matches Ryujinx
+     * BiquadFilterEffectParameter2 and Citron-Neo). yuzu converts to ParameterVersion2 at
+     * the parsing gateway (info_updater) by f32 -> Q14 cast.
      */
     struct ParameterVersion3 {
         /* 0x00 */ std::array<s8, MaxChannels> inputs;
         /* 0x06 */ std::array<s8, MaxChannels> outputs;
-        /* 0x0C */ std::array<f32, 3> b;
-        /* 0x18 */ std::array<f32, 2> a;
-        /* 0x20 */ s8 channel_count;
-        /* 0x21 */ ParameterState state;
-        /* 0x22 */ std::array<u8, 2> reserved;
+        /* 0x0C */ u32 padding;
+        /* 0x10 */ std::array<f32, 3> b;
+        /* 0x1C */ std::array<f32, 2> a;
+        /* 0x24 */ s8 channel_count;
+        /* 0x25 */ ParameterState state;
+        /* 0x26 */ std::array<u8, 2> reserved;
     };
-    static_assert(sizeof(ParameterVersion3) == 0x24,
+    static_assert(sizeof(ParameterVersion3) == 0x28,
                   "BiquadFilterInfo::ParameterVersion3 has the wrong size!");
 
     /**

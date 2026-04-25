@@ -93,24 +93,10 @@ void BiquadFilterCommand::Process(const AudioRenderer::CommandListProcessor& pro
         *state_ = {};
     }
 
-    // Validate that the input/output mix buffer indices are within the renderer's mix
-    // buffer count. A REV15 game running with stale or malformed voice parameters can
-    // hand us an out-of-range index, which makes subspan produce a span shorter than
-    // sample_count and ApplyBiquadFilterFloat OOBs on output[i].
-    const size_t total_samples = processor.mix_buffers.size();
-    const size_t input_offset = static_cast<size_t>(input) * processor.sample_count;
-    const size_t output_offset = static_cast<size_t>(output) * processor.sample_count;
-    if (input_offset + processor.sample_count > total_samples ||
-        output_offset + processor.sample_count > total_samples) {
-        LOG_ERROR(Service_Audio,
-                  "BiquadFilterCommand mix buffer index out of range "
-                  "(input={}, output={}, sample_count={}, total_samples={}); skipping",
-                  input, output, processor.sample_count, total_samples);
-        return;
-    }
-
-    auto input_buffer{processor.mix_buffers.subspan(input_offset, processor.sample_count)};
-    auto output_buffer{processor.mix_buffers.subspan(output_offset, processor.sample_count)};
+    auto input_buffer{
+        processor.mix_buffers.subspan(input * processor.sample_count, processor.sample_count)};
+    auto output_buffer{
+        processor.mix_buffers.subspan(output * processor.sample_count, processor.sample_count)};
 
     if (use_float_processing) {
         ApplyBiquadFilterFloat(output_buffer, input_buffer, biquad.b, biquad.a, *state_,
