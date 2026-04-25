@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "common/alignment.h"
+#include "common/logging/log.h"
 #include "core/file_sys/fssystem/fssystem_integrity_verification_storage.h"
 
 namespace FileSys {
@@ -15,6 +16,18 @@ void IntegrityVerificationStorage::Initialize(VirtualFile hs, VirtualFile ds, s6
                                               s64 upper_layer_verif_block_size, bool is_real_data) {
     // Validate preconditions.
     ASSERT(verif_block_size >= HashSize);
+
+    // Defensive null guard: this is called during NSP/NCA parsing, and a malformed or
+    // unsupported layered-hash layout can produce nullptr storages here. Crashing the
+    // host is worse than failing this NCA gracefully — leave the storages unset so the
+    // outer NCA load fails cleanly via subsequent IsNotNull() / size checks.
+    if (hs == nullptr || ds == nullptr) {
+        LOG_ERROR(Service_FS,
+                  "IntegrityVerificationStorage::Initialize received null storage "
+                  "(hs={}, ds={}); skipping",
+                  static_cast<bool>(hs), static_cast<bool>(ds));
+        return;
+    }
 
     // Set storages.
     m_hash_storage = hs;
