@@ -37,7 +37,8 @@ Result GetInfo(Core::System& system, u64* result, InfoType info_id_type, Handle 
     case InfoType::TotalNonSystemMemorySize:
     case InfoType::UsedNonSystemMemorySize:
     case InfoType::IsApplication:
-    case InfoType::FreeThreadCount: {
+    case InfoType::FreeThreadCount:
+    case InfoType::AliasRegionExtraSize: {
         R_UNLESS(info_sub_id == 0, ResultInvalidEnumValue);
 
         const auto& handle_table = GetCurrentProcess(system.Kernel()).GetHandleTable();
@@ -132,6 +133,13 @@ Result GetInfo(Core::System& system, u64* result, InfoType info_id_type, Handle 
             } else {
                 *result = 0;
             }
+            R_SUCCEED();
+
+        case InfoType::AliasRegionExtraSize:
+            // [18.0.0+] Reports the size of the additional alias region beyond the standard
+            // alias region. yuzu does not allocate an extra alias region, so this is always 0,
+            // matching real Switch firmware behaviour for non-system processes.
+            *result = 0;
             R_SUCCEED();
 
         default:
