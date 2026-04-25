@@ -33,6 +33,7 @@ private:
     Result GetPopOutDataEvent(OutCopyHandle<Kernel::KReadableEvent> out_event);
     Result GetPopInteractiveOutDataEvent(OutCopyHandle<Kernel::KReadableEvent> out_event);
     Result GetIndirectLayerConsumerHandle(Out<u64> out_handle);
+    Result Unknown90(u64 arg0, u64 arg1, u64 arg2, u64 arg3);
 
     void FrontendExecute();
     void FrontendExecuteInteractive();

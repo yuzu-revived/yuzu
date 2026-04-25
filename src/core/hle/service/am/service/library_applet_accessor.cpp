@@ -25,6 +25,7 @@ ILibraryAppletAccessor::ILibraryAppletAccessor(Core::System& system_,
         {30, D<&ILibraryAppletAccessor::GetResult>, "GetResult"},
         {50, nullptr, "SetOutOfFocusApplicationSuspendingEnabled"},
         {60, D<&ILibraryAppletAccessor::PresetLibraryAppletGpuTimeSliceZero>, "PresetLibraryAppletGpuTimeSliceZero"},
+        {90, D<&ILibraryAppletAccessor::Unknown90>, "Unknown90"},
         {100, D<&ILibraryAppletAccessor::PushInData>, "PushInData"},
         {101, D<&ILibraryAppletAccessor::PopOutData>, "PopOutData"},
         {102, nullptr, "PushExtraStorage"},
@@ -131,6 +132,19 @@ Result ILibraryAppletAccessor::GetIndirectLayerConsumerHandle(Out<u64> out_handl
     // We require a non-zero handle to be valid. Using 0xdeadbeef allows us to trace if this is
     // actually used anywhere
     *out_handle = 0xdeadbeef;
+    R_SUCCEED();
+}
+
+Result ILibraryAppletAccessor::Unknown90(u64 arg0, u64 arg1, u64 arg2, u64 arg3) {
+    // Added in firmware 20.0.0+. Per Ryujinx, called when an applet launches; safe to no-op when
+    // all four arguments are zero. Log non-zero values so we notice if a guest needs real handling.
+    if (arg0 != 0 || arg1 != 0 || arg2 != 0 || arg3 != 0) {
+        LOG_WARNING(Service_AM,
+                    "(STUBBED) non-zero args: {:#x} {:#x} {:#x} {:#x}",
+                    arg0, arg1, arg2, arg3);
+    } else {
+        LOG_DEBUG(Service_AM, "(STUBBED) called");
+    }
     R_SUCCEED();
 }
 
