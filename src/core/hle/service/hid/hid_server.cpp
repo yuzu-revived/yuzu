@@ -89,6 +89,7 @@ IHidServer::IHidServer(Core::System& system_, std::shared_ptr<ResourceManager> r
         {88, C<&IHidServer::GetSixAxisSensorIcInformation>, "GetSixAxisSensorIcInformation"},
         {89, C<&IHidServer::ResetIsSixAxisSensorDeviceNewlyAssigned>, "ResetIsSixAxisSensorDeviceNewlyAssigned"},
         {91, C<&IHidServer::ActivateGesture>, "ActivateGesture"},
+        {92, C<&IHidServer::SetGestureOutputRanges>, "SetGestureOutputRanges"},
         {100, C<&IHidServer::SetSupportedNpadStyleSet>, "SetSupportedNpadStyleSet"},
         {101, C<&IHidServer::GetSupportedNpadStyleSet>, "GetSupportedNpadStyleSet"},
         {102, C<&IHidServer::SetSupportedNpadIdType>, "SetSupportedNpadIdType"},
@@ -574,6 +575,14 @@ Result IHidServer::ActivateGesture(u32 basic_gesture_id, ClientAppletResourceUse
     }
 
     R_RETURN(GetResourceManager()->GetGesture()->Activate(aruid.pid, basic_gesture_id));
+}
+
+Result IHidServer::SetGestureOutputRanges(u32 unknown, ClientAppletResourceUserId aruid) {
+    // Switch firmware function semantics not publicly documented; a Ryujinx-style stub
+    // returning success is enough to satisfy callers.
+    LOG_WARNING(Service_HID, "(STUBBED) called, unknown=0x{:X}, applet_resource_user_id={}",
+                unknown, aruid.pid);
+    R_SUCCEED();
 }
 
 Result IHidServer::SetSupportedNpadStyleSet(Core::HID::NpadStyleSet supported_style_set,
