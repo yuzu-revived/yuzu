@@ -361,6 +361,15 @@ public:
      */
     bool IsI3dl2ReverbChannelMappingChanged() const;
 
+    /**
+     * Check if biquad filter parameters for splitter destinations are supported.
+     * Added in REV12, lets a splitter destination apply up to two cascaded biquad
+     * filters to its mix buffer before mixing into the destination.
+     *
+     * @return True if supported, otherwise false.
+     */
+    bool IsBiquadFilterParameterForSplitterEnabled() const;
+
     /// Host version
     u32 process_revision;
     /// User version

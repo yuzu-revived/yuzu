@@ -107,7 +107,7 @@ bool BehaviorInfo::IsCommandProcessingTimeEstimatorVersion4Supported() const {
 }
 
 bool BehaviorInfo::IsCommandProcessingTimeEstimatorVersion5Supported() const {
-    return CheckFeatureSupported(SupportTags::CommandProcessingTimeEstimatorVersion4,
+    return CheckFeatureSupported(SupportTags::CommandProcessingTimeEstimatorVersion5,
                                  user_revision);
 }
 
@@ -188,6 +188,10 @@ bool BehaviorInfo::IsReverbChannelMappingChanged() const {
 
 bool BehaviorInfo::IsI3dl2ReverbChannelMappingChanged() const {
     return CheckFeatureSupported(SupportTags::I3dl2ReverbChannelMappingChange, user_revision);
+}
+
+bool BehaviorInfo::IsBiquadFilterParameterForSplitterEnabled() const {
+    return CheckFeatureSupported(SupportTags::BiquadFilterParameterForSplitter, user_revision);
 }
 
 } // namespace AudioCore::Renderer
