@@ -5,6 +5,7 @@
 
 #include <array>
 #include <string>
+#include <vector>
 #include "common/common_funcs.h"
 #include "common/common_types.h"
 #include "common/swap.h"
@@ -118,6 +119,10 @@ public:
 
 private:
     RawNACP raw{};
+    // Populated when the NACP marks its title block as zlib-compressed (firmware 21+).
+    // Holds the decompressed 32-entry LanguageEntry array (0x6000 bytes) and is consulted
+    // by GetLanguageEntry in preference to raw.language_entries.
+    std::vector<LanguageEntry> decompressed_language_entries;
 };
 
 } // namespace FileSys
