@@ -63,7 +63,7 @@ Result InfoUpdater::UpdateVoiceChannelResources(VoiceContext& voice_context) {
 
 namespace {
 /// Q14 fixed-point conversion of an f32 biquad coefficient. Saturates to s16 range.
-constexpr s16 BiquadFloatToQ14(f32 coefficient) {
+s16 BiquadFloatToQ14(f32 coefficient) {
     const f32 scaled = std::round(coefficient * static_cast<f32>(1 << 14));
     const f32 clamped = std::clamp(scaled, static_cast<f32>(std::numeric_limits<s16>::min()),
                                    static_cast<f32>(std::numeric_limits<s16>::max()));
