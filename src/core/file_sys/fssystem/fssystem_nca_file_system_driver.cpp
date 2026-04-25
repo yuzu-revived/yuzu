@@ -1251,8 +1251,14 @@ Result NcaFileSystemDriver::CreateIntegrityVerificationStorageImpl(
         R_UNLESS(last_layer_info_offset + layer_info.size <= layer_info_offset,
                  ResultRomNcaInvalidIntegrityLayerInfoOffset);
     }
-    storage_info.SetDataStorage(std::make_shared<OffsetVfsFile>(
-        std::move(base_storage), layer_info.size, last_layer_info_offset));
+    // Place the data storage in storage_info[max_layers - 1] rather than the always-slot-6
+    // DataStorage. The HierarchicalIntegrityVerificationStorage consumer reads
+    // storage[level + 2] up to storage[max_layers - 1] for the final layer, so
+    // SetDataStorage() (which writes to slot 6) only happens to be correct when max_layers
+    // is 7. NCAs with fewer layers (most newer game updates) would leave the consumer's
+    // target slot null and crash downstream during integrity verification.
+    storage_info[level_hash_info.max_layers - 1] = std::make_shared<OffsetVfsFile>(
+        std::move(base_storage), layer_info.size, last_layer_info_offset);
 
     // Make the integrity romfs storage.
     auto integrity_storage = std::make_shared<IntegrityRomFsStorage>();
