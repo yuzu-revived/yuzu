@@ -41,6 +41,10 @@ NvResult nvhost_ctrl_gpu::Ioctl1(DeviceFD fd, Ioctl command, std::span<const u8>
             return WrapFixed(this, &nvhost_ctrl_gpu::GetTPCMasks1, input, output);
         case 0x7:
             return WrapFixed(this, &nvhost_ctrl_gpu::FlushL2, input, output);
+        case 0x12:
+            return WrapFixed(this, &nvhost_ctrl_gpu::NumVsms, input, output);
+        case 0x13:
+            return WrapFixed(this, &nvhost_ctrl_gpu::VsmsMapping, input, output);
         case 0x14:
             return WrapFixed(this, &nvhost_ctrl_gpu::GetActiveSlotMask, input, output);
         case 0x1c:
@@ -241,6 +245,23 @@ NvResult nvhost_ctrl_gpu::FlushL2(IoctlFlushL2& params) {
 NvResult nvhost_ctrl_gpu::GetGpuTime(IoctlGetGpuTime& params) {
     LOG_DEBUG(Service_NVDRV, "called");
     params.gpu_time = static_cast<u64_le>(system.CoreTiming().GetGlobalTimeNs().count());
+    return NvResult::Success;
+}
+
+NvResult nvhost_ctrl_gpu::NumVsms(IoctlNumVsms& params) {
+    LOG_DEBUG(Service_NVDRV, "called");
+    // Switch GM20B GPU has two streaming multiprocessors (SMs).
+    params.num_vsms = 2;
+    return NvResult::Success;
+}
+
+NvResult nvhost_ctrl_gpu::VsmsMapping(IoctlVsmsMapping& params) {
+    LOG_DEBUG(Service_NVDRV, "called");
+    // Mirrors Ryujinx: GM20B has SM0 on (gpc=0,tpc=0) and SM1 on (gpc=0,tpc=1).
+    params.sm0_gpc_index = 0;
+    params.sm0_tpc_index = 0;
+    params.sm1_gpc_index = 0;
+    params.sm1_tpc_index = 1;
     return NvResult::Success;
 }
 
