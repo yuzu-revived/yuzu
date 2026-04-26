@@ -40,7 +40,7 @@ layout(binding = BINDING_INPUT_BUFFER, std430) readonly restrict buffer InputBuf
     uvec4 astc_data[];
 };
 
-layout(binding = BINDING_OUTPUT_IMAGE, rgba8) uniform writeonly restrict image2DArray dest_image;
+layout(binding = BINDING_OUTPUT_IMAGE) uniform writeonly restrict image2DArray dest_image;
 
 const uint GOB_SIZE_X_SHIFT = 6;
 const uint GOB_SIZE_Y_SHIFT = 3;

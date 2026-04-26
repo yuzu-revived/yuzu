@@ -859,6 +859,7 @@ TextureCacheRuntime::TextureCacheRuntime(const Device& device_, Scheduler& sched
         const auto image_format = static_cast<PixelFormat>(index_a);
         if (IsPixelFormatASTC(image_format) && !device.IsOptimalAstcSupported()) {
             view_formats[index_a].push_back(VK_FORMAT_A8B8G8R8_UNORM_PACK32);
+            view_formats[index_a].push_back(VK_FORMAT_R8G8B8A8_UNORM);
         }
         for (size_t index_b = 0; index_b < VideoCore::Surface::MaxPixelFormat; index_b++) {
             const auto view_format = static_cast<PixelFormat>(index_b);
@@ -1404,7 +1405,7 @@ Image::Image(TextureCacheRuntime& runtime_, const ImageInfo& info_, GPUVAddr gpu
         const auto& device = runtime->device.GetLogical();
         for (s32 level = 0; level < info.resources.levels; ++level) {
             storage_image_views[level] =
-                MakeStorageView(device, level, *original_image, VK_FORMAT_A8B8G8R8_UNORM_PACK32);
+                MakeStorageView(device, level, *original_image, VK_FORMAT_R8G8B8A8_UNORM);
         }
     }
 }
