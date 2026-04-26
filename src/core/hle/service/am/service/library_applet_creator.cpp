@@ -108,6 +108,10 @@ std::shared_ptr<ILibraryAppletAccessor> CreateGuestApplet(Core::System& system,
         Firmware1500 = 15,
         Firmware1600 = 16,
         Firmware1700 = 17,
+        Firmware1800 = 18,
+        Firmware1900 = 19,
+        Firmware2000 = 20,
+        Firmware2100 = 21,
     };
 
     auto process = std::make_unique<Process>(system);
