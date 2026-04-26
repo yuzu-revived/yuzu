@@ -1732,7 +1732,7 @@ ImageView::ImageView(TextureCacheRuntime& runtime, const VideoCommon::ImageViewI
             .b = ComponentSwizzle(swizzle[2]),
             .a = ComponentSwizzle(swizzle[3]),
         },
-        .subresourceRange = MakeSubresourceRange(aspect_mask, info.range),
+        .subresourceRange = MakeSubresourceRange(aspect_mask, range),
     };
     const auto create = [&](TextureType tex_type, std::optional<u32> num_layers) {
         VkImageViewCreateInfo ci{create_info};

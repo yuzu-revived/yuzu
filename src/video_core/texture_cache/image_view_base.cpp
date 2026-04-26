@@ -14,9 +14,23 @@
 
 namespace VideoCommon {
 
+namespace {
+SubresourceRange ClampRangeToImage(const SubresourceRange& src, const ImageInfo& image_info) {
+    SubresourceRange clamped = src;
+    const s32 image_levels = image_info.resources.levels;
+    if (image_levels > 0) {
+        clamped.base.level = std::min(clamped.base.level, image_levels - 1);
+        clamped.extent.levels =
+            std::min(clamped.extent.levels, image_levels - clamped.base.level);
+    }
+    return clamped;
+}
+} // namespace
+
 ImageViewBase::ImageViewBase(const ImageViewInfo& info, const ImageInfo& image_info,
                              ImageId image_id_, GPUVAddr addr)
-    : image_id{image_id_}, gpu_addr{addr}, format{info.format}, type{info.type}, range{info.range},
+    : image_id{image_id_}, gpu_addr{addr}, format{info.format}, type{info.type},
+      range{ClampRangeToImage(info.range, image_info)},
       size{
           .width = std::max(image_info.size.width >> range.base.level, 1u),
           .height = std::max(image_info.size.height >> range.base.level, 1u),

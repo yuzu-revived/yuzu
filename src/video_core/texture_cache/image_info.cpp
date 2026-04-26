@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: Copyright 2020 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <algorithm>
+#include <bit>
+
 #include <fmt/format.h>
 
 #include "common/assert.h"
@@ -107,6 +110,14 @@ ImageInfo::ImageInfo(const TICEntry& config) noexcept {
     default:
         ASSERT_MSG(false, "Invalid texture_type={}", static_cast<int>(config.texture_type.Value()));
         break;
+    }
+    if (type != ImageType::Linear && type != ImageType::Buffer) {
+        const u32 max_dim = std::max({size.width, size.height,
+                                      type == ImageType::e3D ? size.depth : 1u});
+        if (max_dim > 0) {
+            const s32 max_levels = static_cast<s32>(std::bit_width(max_dim));
+            resources.levels = std::min(resources.levels, max_levels);
+        }
     }
     if (num_samples > 1) {
         size.width *= NumSamplesX(config.msaa_mode);
