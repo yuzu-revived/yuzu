@@ -42,7 +42,7 @@ using VideoCore::Surface::PixelFormatFromDepthFormat;
 using VideoCore::Surface::PixelFormatFromRenderTargetFormat;
 
 constexpr size_t NUM_STAGES = Maxwell::MaxShaderStage;
-constexpr size_t MAX_IMAGE_ELEMENTS = 128;
+constexpr size_t MAX_IMAGE_ELEMENTS = 16384;
 
 DescriptorLayoutBuilder MakeBuilder(const Device& device, std::span<const Shader::Info> infos) {
     DescriptorLayoutBuilder builder{device};
