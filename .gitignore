@@ -4,6 +4,10 @@
 # Build directory
 [Bb]uild*/
 doc-build/
+nx-hbmenu-master/
+nx-hbloader-master/
+libnx-master/
+Atmosphere-master/
 
 # Generated source files
 src/common/scm_rev.cpp
