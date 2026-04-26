@@ -12,6 +12,7 @@
 #include "shader_recompiler/shader_info.h"
 #include "video_core/renderer_vulkan/vk_texture_cache.h"
 #include "video_core/renderer_vulkan/vk_update_descriptor.h"
+#include "video_core/surface.h"
 #include "video_core/texture_cache/types.h"
 #include "video_core/vulkan_common/vulkan_device.h"
 
@@ -190,10 +191,24 @@ inline void PushImageDescriptors(TextureCache& texture_cache,
             ImageView& image_view{texture_cache.GetImageView(image_view_id)};
             const VkImageView vk_image_view{image_view.Handle(desc.type)};
             const Sampler& sampler{texture_cache.GetSampler(sampler_id)};
-            const bool use_fallback_sampler{sampler.HasAddedAnisotropy() &&
-                                            !image_view.SupportsAnisotropy()};
-            const VkSampler vk_sampler{use_fallback_sampler ? sampler.HandleWithDefaultAnisotropy()
-                                                            : sampler.Handle()};
+            const auto view_surface_type =
+                VideoCore::Surface::GetFormatType(image_view.format);
+            const bool view_is_depthlike =
+                view_surface_type == VideoCore::Surface::SurfaceType::Depth ||
+                view_surface_type == VideoCore::Surface::SurfaceType::Stencil ||
+                view_surface_type == VideoCore::Surface::SurfaceType::DepthStencil;
+            const bool needs_no_compare_fallback =
+                sampler.HasComparison() && !view_is_depthlike;
+            const bool use_anisotropy_fallback{sampler.HasAddedAnisotropy() &&
+                                               !image_view.SupportsAnisotropy()};
+            VkSampler vk_sampler;
+            if (needs_no_compare_fallback) {
+                vk_sampler = sampler.HandleNoCompare();
+            } else if (use_anisotropy_fallback) {
+                vk_sampler = sampler.HandleWithDefaultAnisotropy();
+            } else {
+                vk_sampler = sampler.Handle();
+            }
             guest_descriptor_queue.AddSampledImage(vk_image_view, vk_sampler);
             rescaling.PushTexture(texture_cache.IsRescaling(image_view));
         }

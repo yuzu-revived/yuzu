@@ -288,13 +288,22 @@ public:
         return *sampler_default_anisotropy;
     }
 
+    [[nodiscard]] VkSampler HandleNoCompare() const noexcept {
+        return *sampler_no_compare;
+    }
+
     [[nodiscard]] bool HasAddedAnisotropy() const noexcept {
         return static_cast<bool>(sampler_default_anisotropy);
+    }
+
+    [[nodiscard]] bool HasComparison() const noexcept {
+        return static_cast<bool>(sampler_no_compare);
     }
 
 private:
     vk::Sampler sampler;
     vk::Sampler sampler_default_anisotropy;
+    vk::Sampler sampler_no_compare;
 };
 
 class Framebuffer {
